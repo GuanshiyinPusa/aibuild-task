@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "next dev",
+    "build": "npx prisma generate && npx prisma db push && next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "next lint",
     "db:seed": "tsx src/lib/seed.ts",
     "db:reset": "npx prisma migrate reset --force && npm run db:seed",
-    "db:studio": "npx prisma studio"
-  },
-  "dependencies": {
+    "db:studio": "npx prisma studio",
+    "postinstall": "npx prisma generate"
+  },  
+    "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.2.1",
