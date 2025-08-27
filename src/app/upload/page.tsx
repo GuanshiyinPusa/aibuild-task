@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 import {
@@ -34,16 +34,14 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
-// Fixed styled components for drag and drop
 const DropZone = styled(Paper, {
-    // This tells Material-UI which props should NOT be passed to the DOM
     shouldForwardProp: (prop) => prop !== 'isDragActive' && prop !== 'hasFile',
 })<{ isDragActive?: boolean; hasFile?: boolean }>(({ theme, isDragActive, hasFile }) => ({
     border: `2px dashed ${hasFile
-        ? theme.palette.success.main
-        : isDragActive
-            ? theme.palette.primary.main
-            : theme.palette.divider
+            ? theme.palette.success.main
+            : isDragActive
+                ? theme.palette.primary.main
+                : theme.palette.divider
         }`,
     borderRadius: theme.spacing(2),
     padding: theme.spacing(4),
@@ -82,8 +80,9 @@ interface UploadResponse {
         productName: string;
     }>;
 }
+
 export default function Upload() {
-    const { user, isLoading: authLoading, requireAuth } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [message, setMessage] = useState('');
@@ -92,16 +91,23 @@ export default function Upload() {
     const [uploadProgress, setUploadProgress] = useState(0);
     const router = useRouter();
 
+    // ✅ Memoized authentication check
+    const requireAuth = useCallback(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [authLoading, user, router]);
+
     useEffect(() => {
         requireAuth();
-    }, []);
+    }, [requireAuth]);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") {
+        if (e.type === 'dragenter' || e.type === 'dragover') {
             setDragActive(true);
-        } else if (e.type === "dragleave") {
+        } else if (e.type === 'dragleave') {
             setDragActive(false);
         }
     };
@@ -117,9 +123,11 @@ export default function Upload() {
     };
 
     const handleFileSelect = (selectedFile: File) => {
-        if (selectedFile.type.includes('sheet') ||
+        if (
+            selectedFile.type.includes('sheet') ||
             selectedFile.name.endsWith('.xlsx') ||
-            selectedFile.name.endsWith('.xls')) {
+            selectedFile.name.endsWith('.xls')
+        ) {
             setFile(selectedFile);
             setMessage('');
             setUploadedData(null);
@@ -137,9 +145,8 @@ export default function Upload() {
         setMessage('');
         setUploadProgress(0);
 
-        // Simulate progress
         const progressInterval = setInterval(() => {
-            setUploadProgress(prev => {
+            setUploadProgress((prev) => {
                 if (prev >= 90) {
                     clearInterval(progressInterval);
                     return 90;
@@ -154,11 +161,10 @@ export default function Upload() {
 
             const response = await fetch('/api/upload', {
                 method: 'POST',
-                body: formData
+                body: formData,
             });
 
             const result = await response.json();
-
             clearInterval(progressInterval);
             setUploadProgress(100);
 
@@ -166,9 +172,8 @@ export default function Upload() {
                 setUploadedData(result);
                 setMessage(`✅ ${result.message}`);
             } else {
-                setMessage(`❌ ${result.error}`);
+                setMessage(`❌ ${result.error || 'Upload failed.'}`);
             }
-
         } catch (error) {
             clearInterval(progressInterval);
             setMessage('❌ Upload failed. Please try again.');
@@ -183,7 +188,6 @@ export default function Upload() {
         router.push('/dashboard');
     };
 
-    // Loading state
     if (authLoading) {
         return (
             <Box
@@ -202,21 +206,11 @@ export default function Upload() {
         );
     }
 
-    if (!user) {
-        router.push('/login');
-        return null;
-    }
+    if (!user) return null;
 
     return (
-        <Box
-            sx={{
-                minHeight: '100vh',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                py: 4,
-            }}
-        >
+        <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', py: 4 }}>
             <Container maxWidth="md">
-                {/* Header */}
                 <Fade in timeout={800}>
                     <Box textAlign="center" mb={4}>
                         <CloudUpload sx={{ fontSize: 60, color: 'white', mb: 2 }} />
@@ -229,12 +223,10 @@ export default function Upload() {
                     </Box>
                 </Fade>
 
-                {/* Main Upload Card */}
                 <Zoom in timeout={1000}>
                     <Paper elevation={8} sx={{ borderRadius: 3, overflow: 'hidden' }}>
                         <CardContent sx={{ p: 4 }}>
                             <Box component="form" onSubmit={handleFileUpload}>
-                                {/* File Drop Zone - FIXED VERSION */}
                                 <DropZone
                                     isDragActive={dragActive}
                                     hasFile={!!file}
@@ -273,7 +265,6 @@ export default function Upload() {
                                                 <Typography variant="body1" color="text.secondary" mb={3}>
                                                     Supports .xlsx and .xls files up to 10MB
                                                 </Typography>
-
                                                 <Button
                                                     component="label"
                                                     variant="contained"
@@ -293,11 +284,10 @@ export default function Upload() {
                                     </Box>
                                 </DropZone>
 
-                                {/* Progress Bar */}
                                 {isUploading && (
                                     <Fade in>
                                         <Box sx={{ mb: 3 }}>
-                                            <Box display="flex" alignItems="center" justifyContent="between" mb={1}>
+                                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                                                 <Typography variant="body2" color="primary" fontWeight="medium">
                                                     Processing file...
                                                 </Typography>
@@ -314,7 +304,6 @@ export default function Upload() {
                                     </Fade>
                                 )}
 
-                                {/* Action Buttons */}
                                 <Box display="flex" gap={2} mb={3}>
                                     <Button
                                         startIcon={<ArrowBack />}
@@ -338,7 +327,6 @@ export default function Upload() {
                                     </Button>
                                 </Box>
 
-                                {/* Status Message */}
                                 {message && (
                                     <Fade in>
                                         <Alert
@@ -364,7 +352,6 @@ export default function Upload() {
                                     </Fade>
                                 )}
 
-                                {/* Upload Summary */}
                                 {uploadedData && (
                                     <Zoom in>
                                         <Card variant="outlined" sx={{ bgcolor: 'success.light', color: 'success.contrastText', mb: 3 }}>
@@ -385,7 +372,7 @@ export default function Upload() {
                                                             Sample products:
                                                         </Typography>
                                                         <List dense>
-                                                            {uploadedData.data.slice(0, 3).map((product: any, index: number) => (
+                                                            {uploadedData.data.slice(0, 3).map((product, index) => (
                                                                 <ListItem key={index} sx={{ py: 0.5 }}>
                                                                     <ListItemIcon sx={{ minWidth: 30 }}>
                                                                         <TableChart color="success" fontSize="small" />
@@ -430,7 +417,6 @@ export default function Upload() {
                     </Paper>
                 </Zoom>
 
-                {/* Expected Format Guide */}
                 <Fade in timeout={1200}>
                     <Card sx={{ mt: 4, backgroundColor: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}>
                         <CardContent>
@@ -442,38 +428,23 @@ export default function Upload() {
                             <List>
                                 <ListItem>
                                     <ListItemIcon><Description color="primary" /></ListItemIcon>
-                                    <ListItemText
-                                        primary="Column A: Product ID"
-                                        secondary="Unique identifier for each product"
-                                    />
+                                    <ListItemText primary="Column A: Product ID" secondary="Unique identifier for each product" />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemIcon><Description color="primary" /></ListItemIcon>
-                                    <ListItemText
-                                        primary="Column B: Product Name"
-                                        secondary="Descriptive name of the product"
-                                    />
+                                    <ListItemText primary="Column B: Product Name" secondary="Descriptive name of the product" />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemIcon><Description color="primary" /></ListItemIcon>
-                                    <ListItemText
-                                        primary="Column C: Opening Inventory"
-                                        secondary="Initial stock quantity on Day 1"
-                                    />
+                                    <ListItemText primary="Column C: Opening Inventory" secondary="Initial stock quantity on Day 1" />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemIcon><Description color="primary" /></ListItemIcon>
-                                    <ListItemText
-                                        primary="Columns D-I: Procurement Data"
-                                        secondary="Quantity & Price for Days 1, 2, 3"
-                                    />
+                                    <ListItemText primary="Columns D-I: Procurement Data" secondary="Quantity & Price for Days 1, 2, 3" />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemIcon><Description color="primary" /></ListItemIcon>
-                                    <ListItemText
-                                        primary="Columns J-O: Sales Data"
-                                        secondary="Quantity & Price for Days 1, 2, 3"
-                                    />
+                                    <ListItemText primary="Columns J-O: Sales Data" secondary="Quantity & Price for Days 1, 2, 3" />
                                 </ListItem>
                             </List>
                         </CardContent>

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -33,21 +33,21 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
 
-    // Check if already logged in
-    useEffect(() => {
-        checkAuthStatus();
-    }, []);
-
-    const checkAuthStatus = async () => {
+    // Memoize checkAuthStatus to avoid useEffect dependency warning
+    const checkAuthStatus = useCallback(async () => {
         try {
             const response = await fetch('/api/auth/me');
             if (response.ok) {
                 router.push('/dashboard');
             }
-        } catch (error) {
+        } catch {
             // Not logged in, stay on login page
         }
-    };
+    }, [router]);
+
+    useEffect(() => {
+        checkAuthStatus();
+    }, [checkAuthStatus]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,13 +69,12 @@ export default function Login() {
             } else {
                 setError(data.error || 'Authentication failed');
             }
-        } catch (error) {
+        } catch {
             setError('Network error. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
-
     const handleTogglePassword = () => {
         setShowPassword(!showPassword);
     };

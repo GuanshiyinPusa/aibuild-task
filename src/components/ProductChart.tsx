@@ -14,7 +14,6 @@ import {
     MenuItem,
     Paper,
     Divider,
-    Grid,
     Accordion,
     AccordionSummary,
     AccordionDetails,
@@ -48,6 +47,17 @@ interface ProductChartProps {
     data: ChartData[];
     productName: string;
     productId: string;
+}
+
+interface TooltipProps {
+    active?: boolean;
+    payload?: Array<{
+        color: string;
+        name: string;
+        value: number;
+        dataKey: string;
+    }>;
+    label?: string;
 }
 
 export default function ProductChart({ data, productName, productId }: ProductChartProps) {
@@ -91,14 +101,14 @@ export default function ProductChart({ data, productName, productId }: ProductCh
     };
 
     // Custom tooltip component
-    const CustomTooltip = ({ active, payload, label }: any) => {
+    const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
         if (active && payload && payload.length) {
             return (
                 <Paper elevation={8} sx={{ p: 2, border: 1, borderColor: 'divider' }}>
                     <Typography variant="subtitle2" fontWeight="bold" mb={1}>
                         {label}
                     </Typography>
-                    {payload.map((entry: any, index: number) => (
+                    {payload.map((entry, index: number) => (
                         <Box key={index} display="flex" alignItems="center" gap={1} mb={0.5}>
                             <Box
                                 sx={{
@@ -168,9 +178,9 @@ export default function ProductChart({ data, productName, productId }: ProductCh
                     </Box>
                 </Box>
 
-                {/* Key Metrics */}
-                <Grid container spacing={2} mb={2}>
-                    <Grid item xs={6} sm={3}>
+                {/* Key Metrics - Using Box instead of Grid */}
+                <Box sx={{ mb: 2 }}>
+                    <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={2}>
                         <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
                             <Inventory sx={{ mb: 0.5 }} />
                             <Typography variant="caption" display="block">Final Inventory</Typography>
@@ -178,8 +188,6 @@ export default function ProductChart({ data, productName, productId }: ProductCh
                                 {finalInventory.toLocaleString()} units
                             </Typography>
                         </Paper>
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
                         <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'success.light', color: 'success.contrastText' }}>
                             <ShoppingCart sx={{ mb: 0.5 }} />
                             <Typography variant="caption" display="block">Total Procurement</Typography>
@@ -187,8 +195,6 @@ export default function ProductChart({ data, productName, productId }: ProductCh
                                 ${totalProcurement.toLocaleString()}
                             </Typography>
                         </Paper>
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
                         <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center', bgcolor: 'warning.light', color: 'warning.contrastText' }}>
                             <AttachMoney sx={{ mb: 0.5 }} />
                             <Typography variant="caption" display="block">Total Sales</Typography>
@@ -196,8 +202,6 @@ export default function ProductChart({ data, productName, productId }: ProductCh
                                 ${totalSales.toLocaleString()}
                             </Typography>
                         </Paper>
-                    </Grid>
-                    <Grid item xs={6} sm={3}>
                         <Paper
                             variant="outlined"
                             sx={{
@@ -213,8 +217,8 @@ export default function ProductChart({ data, productName, productId }: ProductCh
                                 ${netRevenue.toLocaleString()}
                             </Typography>
                         </Paper>
-                    </Grid>
-                </Grid>
+                    </Box>
+                </Box>
 
                 {/* Chart Controls */}
                 {viewMode === 'chart' && (
@@ -388,8 +392,8 @@ export default function ProductChart({ data, productName, productId }: ProductCh
                     </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
+                    <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(250px, 1fr))" gap={3}>
+                        <Box>
                             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
                                 Performance Metrics
                             </Typography>
@@ -413,8 +417,8 @@ export default function ProductChart({ data, productName, productId }: ProductCh
                                     </Typography>
                                 </Box>
                             </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
+                        </Box>
+                        <Box>
                             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
                                 Daily Averages
                             </Typography>
@@ -438,8 +442,8 @@ export default function ProductChart({ data, productName, productId }: ProductCh
                                     </Typography>
                                 </Box>
                             </Box>
-                        </Grid>
-                    </Grid>
+                        </Box>
+                    </Box>
                 </AccordionDetails>
             </Accordion>
         </Card>

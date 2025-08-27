@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ProductChart from '@/components/ProductChart';
 import { useAuth } from '@/lib/useAuth';
 import {
@@ -25,7 +26,6 @@ import {
     Dashboard as DashboardIcon,
     InsertChart,
 } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
 
 interface Product {
     id: string;
@@ -40,19 +40,24 @@ interface Product {
 }
 
 export default function Dashboard() {
-    const router = useRouter();
-    const { user, isLoading: authLoading, logout, requireAuth } = useAuth();
+    const { user, isLoading: authLoading, logout } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-    const [dataSource, setDataSource] = useState<'sample' | 'uploaded'>('sample');
+    const [dataSource, setDataSource] = useState<'sample' | 'uploaded' | 'database'>('database');
     const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
 
-    // Require authentication on mount
+    // Memoize requireAuth to avoid useEffect dependency warning
+    const requireAuth = useCallback(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [authLoading, user, router]);
+
     useEffect(() => {
         requireAuth();
-    }, []);
+    }, [requireAuth]);
 
-    // Fetch products once the user is authenticated
     useEffect(() => {
         if (user) {
             fetchProducts();
@@ -63,10 +68,10 @@ export default function Dashboard() {
         try {
             const response = await fetch('/api/products');
             if (response.ok) {
-                const data = await response.json();
+                const data: { products: Product[]; source: string } = await response.json();
                 setProducts(data.products);
-                setDataSource(data.source);
-                const autoSelect = data.products.slice(0, Math.min(2, data.products.length)).map((p: any) => p.id);
+                setDataSource(data.source as 'sample' | 'uploaded' | 'database');
+                const autoSelect = data.products.slice(0, Math.min(2, data.products.length)).map((p) => p.id);
                 setSelectedProducts(autoSelect);
             }
         } catch (error) {
@@ -86,14 +91,6 @@ export default function Dashboard() {
 
     const selectedProductsData = products.filter(product => selectedProducts.includes(product.id));
 
-    // ✅ FIX: UseEffect handles redirects safely, not inside render
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.push('/login');
-        }
-    }, [authLoading, user, router]);
-
-    // Show loading while checking authentication
     if (authLoading) {
         return (
             <Box
@@ -112,8 +109,8 @@ export default function Dashboard() {
         );
     }
 
-    // ✅ Avoid rendering dashboard content until redirect completes
     if (!user) {
+        router.push('/login');
         return null;
     }
 
@@ -136,17 +133,16 @@ export default function Dashboard() {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: '100vh', bgcolor: 'background.default' }}>
-            {/* Header */}
+        <div className="min-h-screen bg-gray-50">
             <AppBar position="static" elevation={2}>
                 <Toolbar>
                     <DashboardIcon sx={{ mr: 2 }} />
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
                         Analytics Dashboard
                         <Chip
-                            label={dataSource === 'uploaded' ? '📄 Excel Data' : '🧪 Sample Data'}
+                            label={dataSource === 'uploaded' ? '📄 Excel Data' : dataSource === 'database' ? '💾 Database' : '🧪 Sample Data'}
                             size="small"
-                            color={dataSource === 'uploaded' ? 'success' : 'info'}
+                            color={dataSource === 'uploaded' || dataSource === 'database' ? 'success' : 'info'}
                             sx={{ ml: 2 }}
                         />
                     </Typography>
@@ -186,7 +182,6 @@ export default function Dashboard() {
                 </Toolbar>
             </AppBar>
 
-            {/* Main Content */}
             <Container maxWidth="xl" sx={{ py: 4 }}>
                 {products.length === 0 ? (
                     <Paper elevation={2} sx={{ p: 6, textAlign: 'center' }}>
@@ -207,7 +202,6 @@ export default function Dashboard() {
                     </Paper>
                 ) : (
                     <>
-                        {/* Product Selection */}
                         <Card elevation={2} sx={{ mb: 4 }}>
                             <CardContent>
                                 <Typography variant="h5" gutterBottom color="primary" fontWeight="bold">
@@ -252,16 +246,18 @@ export default function Dashboard() {
                             </CardContent>
                         </Card>
 
-                        {/* Charts */}
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             {selectedProductsData.length > 0 ? (
                                 selectedProductsData.map(product => (
-                                    <ProductChart
-                                        key={product.id}
-                                        data={product.chartData}
-                                        productName={product.productName}
-                                        productId={product.productId}
-                                    />
+                                    <Card key={product.id} elevation={3}>
+                                        <CardContent>
+                                            <ProductChart
+                                                data={product.chartData}
+                                                productName={product.productName}
+                                                productId={product.productId}
+                                            />
+                                        </CardContent>
+                                    </Card>
                                 ))
                             ) : (
                                 <Paper
@@ -285,6 +281,6 @@ export default function Dashboard() {
                     </>
                 )}
             </Container>
-        </Box>
+        </div>
     );
 }
