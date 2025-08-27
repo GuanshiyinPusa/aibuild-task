@@ -33,11 +33,6 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
 
-    // Check if already logged in
-    useEffect(() => {
-        checkAuthStatus();
-    }, [checkAuthStatus]);
-
     const checkAuthStatus = useCallback(async () => {
         try {
             const response = await fetch('/api/auth/me');
@@ -48,6 +43,11 @@ export default function Login() {
             // Not logged in, stay on login page
         }
     }, [router]);
+
+    // Check if already logged in
+    useEffect(() => {
+        checkAuthStatus();
+    }, [checkAuthStatus]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

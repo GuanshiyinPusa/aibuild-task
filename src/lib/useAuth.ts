@@ -14,7 +14,7 @@ export function useAuth() {
 
     useEffect(() => {
         checkAuthStatus();
-    }, []);
+    }, [checkAuthStatus]);
 
     const checkAuthStatus = useCallback(async () => {
         try {
@@ -54,7 +54,7 @@ export function useAuth() {
             await fetch('/api/auth/logout', { method: 'POST' });
             setUser(null);
             router.push('/login');
-        } catch {
+        } catch (error) {
             console.error('Logout error:', error);
             // Still redirect even if logout request fails
             setUser(null);
