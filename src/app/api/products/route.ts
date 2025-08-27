@@ -2,13 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sessionManager } from '@/lib/sessionManager';
 
-// Helper function to transform product data for charts
-const transformProductData = (product: any) => {
+interface ProductData {
+    id: string;
+    productId: string;
+    productName: string;
+    openingInventory: number;
+    dailyData: Array<{
+        day: number;
+        procurementQty: number;
+        procurementPrice: number;
+        salesQty: number;
+        salesPrice: number;
+    }>;
+}
+
+const transformProductData = (product: ProductData) => {
     const chartData = [];
     let currentInventory = product.openingInventory;
 
     for (let day = 1; day <= 3; day++) {
-        const dayData = product.dailyData.find((d: any) => d.day === day);
+        const dayData = product.dailyData.find((d) => d.day === day);
         if (dayData) {
             currentInventory = currentInventory + dayData.procurementQty - dayData.salesQty;
 
@@ -32,7 +45,6 @@ const transformProductData = (product: any) => {
 
 export async function GET(request: NextRequest) {
     try {
-        // Check authentication
         const sessionToken = request.cookies.get('session')?.value;
         if (!sessionToken) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -43,7 +55,6 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
         }
 
-        // Fetch products for the authenticated user
         const products = await prisma.product.findMany({
             where: { userId: session.userId },
             include: {
@@ -54,7 +65,6 @@ export async function GET(request: NextRequest) {
             orderBy: { productName: 'asc' }
         });
 
-        // Transform data for charts
         const transformedProducts = products.map(transformProductData);
 
         return NextResponse.json({

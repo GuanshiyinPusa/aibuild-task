@@ -18,7 +18,6 @@ import {
     ListItemIcon,
     ListItemText,
     Divider,
-    IconButton,
     Fade,
     Zoom,
 } from '@mui/material';
@@ -26,7 +25,6 @@ import {
     CloudUpload,
     Dashboard,
     CheckCircle,
-    Error,
     InsertDriveFile,
     ArrowBack,
     Description,
@@ -75,13 +73,22 @@ const VisuallyHiddenInput = styled('input')({
     width: 1,
 });
 
+interface UploadResponse {
+    success: boolean;
+    message: string;
+    data?: Array<{
+        id: string;
+        productId: string;
+        productName: string;
+    }>;
+}
 export default function Upload() {
     const { user, isLoading: authLoading, requireAuth } = useAuth();
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [message, setMessage] = useState('');
     const [dragActive, setDragActive] = useState(false);
-    const [uploadedData, setUploadedData] = useState<any>(null);
+    const [uploadedData, setUploadedData] = useState<UploadResponse | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const router = useRouter();
 

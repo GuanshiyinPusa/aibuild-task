@@ -18,7 +18,6 @@ import {
     Card,
     CardContent,
     CircularProgress,
-    Alert,
 } from '@mui/material';
 import {
     CloudUpload,
@@ -28,10 +27,23 @@ import {
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 
+
+interface Product {
+    id: string;
+    productId: string;
+    productName: string;
+    chartData: Array<{
+        day: string;
+        inventory: number;
+        procurementAmount: number;
+        salesAmount: number;
+    }>;
+}
+
 export default function Dashboard() {
     const router = useRouter(); // ✅ Move this INSIDE the component
     const { user, isLoading: authLoading, logout, requireAuth } = useAuth();
-    const [products, setProducts] = useState<any[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
     const [dataSource, setDataSource] = useState<'sample' | 'uploaded'>('sample');
     const [isLoading, setIsLoading] = useState(true);

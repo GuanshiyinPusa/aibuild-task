@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
         response.cookies.delete('session');
 
         return response;
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Logout failed' }, { status: 500 });
     }
 }

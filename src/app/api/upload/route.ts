@@ -5,7 +5,6 @@ import * as XLSX from 'xlsx';
 
 export async function POST(request: NextRequest) {
     try {
-        // Check authentication
         const sessionToken = request.cookies.get('session')?.value;
         if (!sessionToken) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,23 +22,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
-        // Read the Excel file
         const buffer = Buffer.from(await file.arrayBuffer());
         const workbook = XLSX.read(buffer, { type: 'buffer' });
 
-        // Get the first sheet
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
 
-        // Convert to JSON (array of arrays)
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
 
-        // Skip the header row and process data
-        const dataRows = jsonData.slice(1) as any[][];
+        const dataRows = jsonData.slice(1);
 
-        // Start a transaction to ensure data consistency
         const result = await prisma.$transaction(async (tx) => {
-            // Delete existing products for this user (fresh import)
             await tx.product.deleteMany({
                 where: { userId: session.userId }
             });
@@ -47,7 +40,6 @@ export async function POST(request: NextRequest) {
             const createdProducts = [];
 
             for (const row of dataRows) {
-                // Skip empty rows
                 if (!row || row.length === 0 || !row[0]) continue;
 
                 const [
@@ -56,7 +48,6 @@ export async function POST(request: NextRequest) {
                     salesQty1, salesPrice1, salesQty2, salesPrice2, salesQty3, salesPrice3
                 ] = row;
 
-                // Create product
                 const product = await tx.product.create({
                     data: {
                         productId: productId?.toString() || '',
@@ -66,7 +57,6 @@ export async function POST(request: NextRequest) {
                     }
                 });
 
-                // Create daily data for 3 days
                 const dailyDataEntries = [
                     {
                         day: 1,
