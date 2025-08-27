@@ -1,5 +1,16 @@
 # Analytics Dashboard - Technical Documentation
 
+**Live Application**: https://aibuild-task-git-main-guanshiyinpusas-projects.vercel.app
+
+**Repository Branches**:
+- `backup-tailwind-version`: Initial prototype
+- `sqlite-version-undeployable-on-vercel`: Local development version
+- `main`: Production deployment currently running on vercel
+
+**Local Deployment**:
+```bash
+npm run dev
+```
 ## Understanding of the Requirements
 
 ### Core Functionality Analysis
@@ -184,25 +195,4 @@ DailyData
 - `JWT_SECRET`: Token signing secret
 - `NEXTAUTH_SECRET`: Additional authentication secret
 
-### Build Process
-- Prisma client generation during build
-- Database schema synchronization
-- Static asset optimization
-
-## Future Enhancements
-
-- Data export functionality
-- Advanced filtering and search capabilities
-- Real-time collaboration features
-- Enhanced data validation and error reporting
-- Performance optimization for larger datasets
-- Admin panel for user management
-
 ---
-
-**Live Application**: https://aibuild-task-git-main-guanshiyinpusas-projects.vercel.app
-
-**Repository Branches**:
-- `backup-tailwind-version`: Initial prototype
-- `sqlite-version-undeployable-on-vercel`: Local development version
-- `main`: Production deployment currently running on vercel
