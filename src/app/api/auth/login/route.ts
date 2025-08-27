@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { userStore } from '@/lib/userStore';
+import { prisma } from '@/lib/db';
 import { sessionManager } from '@/lib/sessionManager';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,9 +11,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
         }
 
-        const user = userStore.validateCredentials(username, password);
+        // Find user in database
+        const user = await prisma.user.findUnique({
+            where: { username }
+        });
 
         if (!user) {
+            return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
+        }
+
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
             return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
         }
 
@@ -27,13 +37,13 @@ export async function POST(request: NextRequest) {
         // Set session cookie
         response.cookies.set('session', sessionToken, {
             httpOnly: true,
-            secure: false, // false for localhost
+            secure: false,
             sameSite: 'lax',
             maxAge: 24 * 60 * 60,
             path: '/'
         });
 
-        console.log('Login successful, created session:', sessionToken);
+        console.log('Login successful for user:', username);
         return response;
     } catch (error) {
         console.error('Login error:', error);

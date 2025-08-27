@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { userStore } from '@/lib/userStore';
+import { prisma } from '@/lib/db';
 import { sessionManager } from '@/lib/sessionManager';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,11 +19,27 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
         }
 
-        if (userStore.findByUsername(username)) {
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { username }
+        });
+
+        if (existingUser) {
             return NextResponse.json({ error: 'Username already exists' }, { status: 400 });
         }
 
-        const newUser = userStore.createUser(username, password);
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 12);
+
+        // Create user
+        const newUser = await prisma.user.create({
+            data: {
+                username,
+                password: hashedPassword
+            }
+        });
+
+        // Create session
         const sessionToken = sessionManager.createSession(newUser.id, newUser.username);
 
         const response = NextResponse.json({
@@ -38,6 +55,7 @@ export async function POST(request: NextRequest) {
             path: '/'
         });
 
+        console.log('User registered successfully:', username);
         return response;
     } catch (error) {
         console.error('Registration error:', error);

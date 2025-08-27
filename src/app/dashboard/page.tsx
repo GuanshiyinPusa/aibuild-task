@@ -3,8 +3,33 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProductChart from '@/components/ProductChart';
 import { useAuth } from '@/lib/useAuth';
+import {
+    AppBar,
+    Toolbar,
+    Typography,
+    Button,
+    Box,
+    Chip,
+    Container,
+    Paper,
+    FormGroup,
+    FormControlLabel,
+    Checkbox,
+    Card,
+    CardContent,
+    CircularProgress,
+    Alert,
+} from '@mui/material';
+import {
+    CloudUpload,
+    Logout,
+    Dashboard as DashboardIcon,
+    InsertChart,
+} from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+    const router = useRouter(); // ✅ Move this INSIDE the component
     const { user, isLoading: authLoading, logout, requireAuth } = useAuth();
     const [products, setProducts] = useState<any[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -51,113 +76,165 @@ export default function Dashboard() {
     // Show loading while checking authentication
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Checking authentication...</p>
-                </div>
-            </div>
+            <Box
+                display="flex"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                minHeight="100vh"
+                bgcolor="background.default"
+            >
+                <CircularProgress size={60} sx={{ mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                    Checking authentication...
+                </Typography>
+            </Box>
         );
     }
 
     // Don't render dashboard if not authenticated
     if (!user) {
+        router.push('/login');
         return null;
     }
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading products...</p>
-                </div>
-            </div>
+            <Box
+                display="flex"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                minHeight="100vh"
+                bgcolor="background.default"
+            >
+                <CircularProgress size={60} sx={{ mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                    Loading products...
+                </Typography>
+            </Box>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <Box sx={{ flexGrow: 1, minHeight: '100vh', bgcolor: 'background.default' }}>
             {/* Header */}
-            <div className="bg-white shadow-sm border-b">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-4">
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                Analytics Dashboard
-                            </h1>
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${dataSource === 'uploaded'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-blue-100 text-blue-800'
-                                }`}>
-                                {dataSource === 'uploaded' ? '📄 Excel Data' : '🧪 Sample Data'}
-                            </span>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-700">
-                                Welcome, <strong>{user.username}</strong>
-                            </span>
-                            <Link
-                                href="/upload"
-                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                            >
-                                Upload Data
-                            </Link>
-                            <button
-                                onClick={logout}
-                                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 font-medium"
-                            >
-                                Logout
-                            </button>
-                            <span className="px-3 py-2 text-sm bg-green-100 text-green-800 rounded-lg">
-                                {products.length} Products
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <AppBar position="static" elevation={2}>
+                <Toolbar>
+                    <DashboardIcon sx={{ mr: 2 }} />
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+                        Analytics Dashboard
+                        <Chip
+                            label={dataSource === 'uploaded' ? '📄 Excel Data' : '🧪 Sample Data'}
+                            size="small"
+                            color={dataSource === 'uploaded' ? 'success' : 'info'}
+                            sx={{ ml: 2 }}
+                        />
+                    </Typography>
+
+                    <Box display="flex" alignItems="center" gap={2}>
+                        <Typography variant="body2" color="inherit">
+                            Welcome, <strong>{user.username}</strong>
+                        </Typography>
+
+                        <Button
+                            component={Link}
+                            href="/upload"
+                            variant="contained"
+                            color="secondary"
+                            startIcon={<CloudUpload />}
+                            sx={{ color: 'white' }}
+                        >
+                            Upload Data
+                        </Button>
+
+                        <Button
+                            onClick={logout}
+                            variant="outlined"
+                            color="inherit"
+                            startIcon={<Logout />}
+                            sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white' }}
+                        >
+                            Logout
+                        </Button>
+
+                        <Chip
+                            label={`${products.length} Products`}
+                            color="success"
+                            variant="filled"
+                        />
+                    </Box>
+                </Toolbar>
+            </AppBar>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto p-6">
+            <Container maxWidth="xl" sx={{ py: 4 }}>
                 {products.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-lg border">
-                        <p className="text-gray-500 text-lg mb-4">
+                    <Paper elevation={2} sx={{ p: 6, textAlign: 'center' }}>
+                        <InsertChart sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+                        <Typography variant="h5" gutterBottom color="text.secondary">
                             No product data available
-                        </p>
-                        <Link
+                        </Typography>
+                        <Button
+                            component={Link}
                             href="/upload"
-                            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
+                            variant="contained"
+                            size="large"
+                            startIcon={<CloudUpload />}
+                            sx={{ mt: 2 }}
                         >
                             Upload Excel File
-                        </Link>
-                    </div>
+                        </Button>
+                    </Paper>
                 ) : (
                     <>
                         {/* Product Selection */}
-                        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm border">
-                            <h2 className="text-xl font-semibold mb-4 text-gray-900">
-                                Select Products to Compare
-                            </h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {products.map(product => (
-                                    <label key={product.id} className="flex items-center space-x-3 p-3 border rounded-md hover:bg-gray-50 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedProducts.includes(product.id)}
-                                            onChange={() => handleProductSelection(product.id)}
-                                            className="h-4 w-4 text-blue-600"
+                        <Card elevation={2} sx={{ mb: 4 }}>
+                            <CardContent>
+                                <Typography variant="h5" gutterBottom color="primary" fontWeight="bold">
+                                    Select Products to Compare
+                                </Typography>
+                                <FormGroup row>
+                                    {products.map(product => (
+                                        <FormControlLabel
+                                            key={product.id}
+                                            control={
+                                                <Checkbox
+                                                    checked={selectedProducts.includes(product.id)}
+                                                    onChange={() => handleProductSelection(product.id)}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label={
+                                                <Box>
+                                                    <Typography variant="body1" fontWeight="medium">
+                                                        {product.productName}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        ID: {product.productId}
+                                                    </Typography>
+                                                </Box>
+                                            }
+                                            sx={{
+                                                mr: 3,
+                                                mb: 1,
+                                                border: 1,
+                                                borderColor: 'divider',
+                                                borderRadius: 2,
+                                                px: 2,
+                                                py: 1,
+                                                '&:hover': {
+                                                    backgroundColor: 'action.hover',
+                                                },
+                                            }}
                                         />
-                                        <div className="flex-1">
-                                            <span className="font-medium text-gray-900">{product.productName}</span>
-                                            <div className="text-sm text-gray-500">ID: {product.productId}</div>
-                                        </div>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
+                                    ))}
+                                </FormGroup>
+                            </CardContent>
+                        </Card>
 
                         {/* Charts */}
-                        <div className="space-y-8">
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             {selectedProductsData.length > 0 ? (
                                 selectedProductsData.map(product => (
                                     <ProductChart
@@ -168,16 +245,27 @@ export default function Dashboard() {
                                     />
                                 ))
                             ) : (
-                                <div className="text-center py-12 bg-white rounded-lg border">
-                                    <p className="text-gray-500 text-lg">
+                                <Paper
+                                    elevation={2}
+                                    sx={{
+                                        p: 8,
+                                        textAlign: 'center',
+                                        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+                                    }}
+                                >
+                                    <InsertChart sx={{ fontSize: 80, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
+                                    <Typography variant="h5" color="text.secondary" gutterBottom>
                                         Select products above to view their analytics
-                                    </p>
-                                </div>
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary">
+                                        Choose one or more products to see detailed charts and insights
+                                    </Typography>
+                                </Paper>
                             )}
-                        </div>
+                        </Box>
                     </>
                 )}
-            </div>
-        </div>
+            </Container>
+        </Box>
     );
 }
