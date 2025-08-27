@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -36,18 +36,18 @@ export default function Login() {
     // Check if already logged in
     useEffect(() => {
         checkAuthStatus();
-    }, []);
+    }, [checkAuthStatus]);
 
-    const checkAuthStatus = async () => {
+    const checkAuthStatus = useCallback(async () => {
         try {
             const response = await fetch('/api/auth/me');
             if (response.ok) {
                 router.push('/dashboard');
             }
-        } catch (error) {
+        } catch {
             // Not logged in, stay on login page
         }
-    };
+    }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,7 +69,7 @@ export default function Login() {
             } else {
                 setError(data.error || 'Authentication failed');
             }
-        } catch (error) {
+        } catch {
             setError('Network error. Please try again.');
         } finally {
             setIsLoading(false);

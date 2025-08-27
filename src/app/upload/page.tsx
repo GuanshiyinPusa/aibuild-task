@@ -94,7 +94,7 @@ export default function Upload() {
 
     useEffect(() => {
         requireAuth();
-    }, []);
+    }, [requireAuth]);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -385,7 +385,7 @@ export default function Upload() {
                                                             Sample products:
                                                         </Typography>
                                                         <List dense>
-                                                            {uploadedData.data.slice(0, 3).map((product: any, index: number) => (
+                                                            {uploadedData.data.slice(0, 3).map((product, index: number) => (
                                                                 <ListItem key={index} sx={{ py: 0.5 }}>
                                                                     <ListItemIcon sx={{ minWidth: 30 }}>
                                                                         <TableChart color="success" fontSize="small" />

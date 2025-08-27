@@ -50,7 +50,7 @@ export default function Dashboard() {
     // Require authentication on mount
     useEffect(() => {
         requireAuth();
-    }, []);
+    }, [requireAuth]);
 
     // Fetch products once the user is authenticated
     useEffect(() => {
@@ -63,10 +63,12 @@ export default function Dashboard() {
         try {
             const response = await fetch('/api/products');
             if (response.ok) {
-                const data = await response.json();
+                const data: { products: Product[]; source: 'sample' | 'uploaded' } = await response.json();
                 setProducts(data.products);
                 setDataSource(data.source);
-                const autoSelect = data.products.slice(0, Math.min(2, data.products.length)).map((p: any) => p.id);
+                const autoSelect = data.products
+                    .slice(0, Math.min(2, data.products.length))
+                    .map(p => p.id);
                 setSelectedProducts(autoSelect);
             }
         } catch (error) {

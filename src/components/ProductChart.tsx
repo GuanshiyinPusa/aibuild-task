@@ -91,14 +91,29 @@ export default function ProductChart({ data, productName, productId }: ProductCh
     };
 
     // Custom tooltip component
-    const CustomTooltip = ({ active, payload, label }: any) => {
+    type TooltipPayloadEntry = {
+        color: string;
+        name: string;
+        value: number;
+        dataKey: string;
+    };
+
+    const CustomTooltip = ({
+        active,
+        payload,
+        label,
+    }: {
+        active?: boolean;
+        payload?: TooltipPayloadEntry[];
+        label?: string;
+    }) => {
         if (active && payload && payload.length) {
             return (
                 <Paper elevation={8} sx={{ p: 2, border: 1, borderColor: 'divider' }}>
                     <Typography variant="subtitle2" fontWeight="bold" mb={1}>
                         {label}
                     </Typography>
-                    {payload.map((entry: any, index: number) => (
+                    {payload.map((entry: TooltipPayloadEntry, index: number) => (
                         <Box key={index} display="flex" alignItems="center" gap={1} mb={0.5}>
                             <Box
                                 sx={{
