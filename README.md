@@ -1,6 +1,6 @@
 # Analytics Dashboard - Technical Documentation
 
-**Live Application**: https://aibuild-task-git-main-guanshiyinpusas-projects.vercel.app
+**Live Application**: [https://aibuild-task-git-main-guanshiyinpusas-projects.vercel.app](https://aibuild-task.vercel.app/)
 
 **Repository Branches**:
 - `backup-tailwind-version`: Initial prototype
