@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx prisma generate && npx prisma db push && next build",
+    "build": "next build",
+    "vercel-build": "npx prisma generate && npx prisma db push && npm run db:seed && next build",
     "start": "next start",
     "lint": "next lint",
     "db:seed": "tsx src/lib/seed.ts",
     "db:reset": "npx prisma migrate reset --force && npm run db:seed",
     "db:studio": "npx prisma studio",
     "postinstall": "npx prisma generate"
-  },  
+  },
     "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
