@@ -27,7 +27,6 @@ import {
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 
-
 interface Product {
     id: string;
     productId: string;
@@ -41,17 +40,19 @@ interface Product {
 }
 
 export default function Dashboard() {
-    const router = useRouter(); // ✅ Move this INSIDE the component
+    const router = useRouter();
     const { user, isLoading: authLoading, logout, requireAuth } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
     const [dataSource, setDataSource] = useState<'sample' | 'uploaded'>('sample');
     const [isLoading, setIsLoading] = useState(true);
 
+    // Require authentication on mount
     useEffect(() => {
         requireAuth();
     }, []);
 
+    // Fetch products once the user is authenticated
     useEffect(() => {
         if (user) {
             fetchProducts();
@@ -85,6 +86,13 @@ export default function Dashboard() {
 
     const selectedProductsData = products.filter(product => selectedProducts.includes(product.id));
 
+    // ✅ FIX: UseEffect handles redirects safely, not inside render
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [authLoading, user, router]);
+
     // Show loading while checking authentication
     if (authLoading) {
         return (
@@ -104,9 +112,8 @@ export default function Dashboard() {
         );
     }
 
-    // Don't render dashboard if not authenticated
+    // ✅ Avoid rendering dashboard content until redirect completes
     if (!user) {
-        router.push('/login');
         return null;
     }
 
