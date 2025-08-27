@@ -9,6 +9,7 @@
 
 **Local Deployment**:
 ```bash
+npm install
 npm run dev
 ```
 ## Understanding of the Requirements
