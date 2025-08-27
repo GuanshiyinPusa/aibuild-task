@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
+        // Read the Excel file
         const buffer = Buffer.from(await file.arrayBuffer());
         const workbook = XLSX.read(buffer, { type: 'buffer' });
 
@@ -29,26 +30,29 @@ export async function POST(request: NextRequest) {
         const worksheet = workbook.Sheets[sheetName];
 
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
-
         const dataRows = jsonData.slice(1);
 
-        const result = await prisma.$transaction(async (tx) => {
-            await tx.product.deleteMany({
-                where: { userId: session.userId }
-            });
+        // Delete existing products for this user first (without transaction)
+        console.log('Deleting existing products for user:', session.userId);
+        await prisma.product.deleteMany({
+            where: { userId: session.userId }
+        });
 
-            const createdProducts = [];
+        const createdProducts = [];
 
-            for (const row of dataRows) {
-                if (!row || row.length === 0 || !row[0]) continue;
+        // Process each row individually (without transaction)
+        for (const row of dataRows) {
+            if (!row || row.length === 0 || !row[0]) continue;
 
+            try {
                 const [
                     productId, productName, openingInventory,
                     procQty1, procPrice1, procQty2, procPrice2, procQty3, procPrice3,
                     salesQty1, salesPrice1, salesQty2, salesPrice2, salesQty3, salesPrice3
                 ] = row;
 
-                const product = await tx.product.create({
+                // Create product
+                const product = await prisma.product.create({
                     data: {
                         productId: productId?.toString() || '',
                         productName: productName?.toString() || 'Unknown Product',
@@ -57,6 +61,7 @@ export async function POST(request: NextRequest) {
                     }
                 });
 
+                // Create daily data entries
                 const dailyDataEntries = [
                     {
                         day: 1,
@@ -84,26 +89,32 @@ export async function POST(request: NextRequest) {
                     }
                 ];
 
-                await tx.dailyData.createMany({
-                    data: dailyDataEntries
-                });
+                // Create daily data one by one to avoid transaction issues
+                for (const dayEntry of dailyDataEntries) {
+                    await prisma.dailyData.create({
+                        data: dayEntry
+                    });
+                }
 
                 createdProducts.push({
                     id: product.id,
                     productId: product.productId,
                     productName: product.productName
                 });
+
+                console.log(`Created product: ${product.productName}`);
+            } catch (rowError) {
+                console.error(`Error processing row:`, row, rowError);
+                // Continue with next row instead of failing completely
             }
+        }
 
-            return createdProducts;
-        });
-
-        console.log(`Successfully processed ${result.length} products for user ${session.username}`);
+        console.log(`Successfully processed ${createdProducts.length} products for user ${session.username}`);
 
         return NextResponse.json({
             success: true,
-            message: `Successfully processed ${result.length} products`,
-            data: result
+            message: `Successfully processed ${createdProducts.length} products`,
+            data: createdProducts
         });
 
     } catch (error) {
